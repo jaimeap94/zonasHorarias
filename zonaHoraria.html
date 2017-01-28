@@ -1,0 +1,79 @@
+<!DOCTYPE html> 
+<html> 
+<head> 
+<title>Plugin zona horaria</title> 
+<meta charset="UTF-8" > 
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<script src="pluginZH.js"></script>
+<script> 
+ $(function(){ 
+     $('#principal').pluginZH();
+}); 
+
+$.fn.pluginZH = function() {
+    this.append( 'Ciudad origen <select id="ciudadOrigen"> </select> <input type="time" id="tiempoOrigen" value="00:00:00"  step="1"> </br> Ciudad desconocida  <select id="ciudadDestino"> </select> <input type="time" id="tiempoDestino" value="00:00:00"  step="1" disabled>' );
+
+    lee_json();
+    $( "#ciudadOrigen" ).change(function() {
+        calculoZona();
+     });
+     $( "#ciudadDestino" ).change(function() {
+        calculoZona();
+     });
+     $( "#tiempoOrigen" ).change(function() {
+        calculoZona();
+     });
+};
+
+function calculoZona(){
+    var hora = $("#tiempoOrigen").val().split(':');
+    var diferencia = calculoDiferencia();
+    if (diferencia % 1 == 0) {
+            var t = parseInt(hora[0]);
+            t += diferencia;
+            hora[0] = t;
+            if(hora[0]>23) hora[0] -=24;  
+    }
+
+    if(hora[0]>23)  hora[0] -=24;
+    else if(hora[0]<0) hora[0] = 24 + hora[0]; 
+    if(hora[0]<10) hora[0] = "0"+hora[0];
+    if(hora[2] == null) hora[2]="00";
+    $("#tiempoDestino").val(hora[0]+":"+hora[1]+":"+hora[2]);
+}
+
+function lee_json() {
+            var cadena = $.getJSON("zonasHorarias.json", function(datos) {
+                for (var i=0; i<datos.length; i++) {
+                       if(datos[i].utc != null){
+                           for(var j=0; j<datos[i].utc.length; j++){
+                                var ciudad = datos[i].utc[j].split('/');
+                                if (ciudad[0] != 'Etc'){
+                                    $("#ciudadOrigen").append('<option value="'+datos[i].offset+'">'+ciudad[1]+'</option>');
+                                    $("#ciudadDestino").append('<option value="'+datos[i].offset+'">'+ciudad[1]+'</option>');
+                                }  
+                            }
+                       }
+                    }
+            });
+}
+
+function calculoDiferencia(){
+    var origen = parseInt($( "#ciudadOrigen" ).val()) 
+    var destino =  parseInt($( "#ciudadDestino" ).val());
+    var diferencia = 0;
+    if(origen > destino) diferencia = -(origen - destino);
+    else if(origen < destino){
+        if(origen < 0 && destino >0) diferencia = -(origen + destino);
+        else diferencia = -(origen - destino);
+    }
+    return diferencia;
+}
+
+</script> 
+</head> 
+<body> 
+<div id="principal"></div>  
+</select>
+</body> 
+<html>
